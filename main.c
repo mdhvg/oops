@@ -89,47 +89,48 @@ int remove_zsh_lines(const char* histfile_command, int lines) {
 	return 0;
 }
 
-int remove_bash_lines(const char* histfile_command, int lines) {
-	char pathbuf[256];
-	if (get_histfile(histfile_command, pathbuf)) return 1;
-	pathbuf[strcspn(pathbuf, "\n")] = 0; // Very Very important, filepaths have a trailing \n char
+// Turns out bash isn't supported yet
+// int remove_bash_lines(const char* histfile_command, int lines) {
+// 	char pathbuf[256];
+// 	if (get_histfile(histfile_command, pathbuf)) return 1;
+// 	pathbuf[strcspn(pathbuf, "\n")] = 0; // Very Very important, filepaths have a trailing \n char
 
-	FILE* hist = fopen(pathbuf, "r+");
-	if (hist == NULL) {
-		fprintf(stderr, "Can't open histfile: %s\n", pathbuf);
-		return 1;
-	}
-	if (fseek(hist, 0, SEEK_END) != 0) {
-		fprintf(stderr, "Seek error\n");
-		fclose(hist);
-		return 1;
-	}
-	size_t pos = ftell(hist);
-	if (pos < 0) {
-		fprintf(stderr, "fTell error\n");
-		fclose(hist);
-		return 1;
-	}
+// 	FILE* hist = fopen(pathbuf, "r+");
+// 	if (hist == NULL) {
+// 		fprintf(stderr, "Can't open histfile: %s\n", pathbuf);
+// 		return 1;
+// 	}
+// 	if (fseek(hist, 0, SEEK_END) != 0) {
+// 		fprintf(stderr, "Seek error\n");
+// 		fclose(hist);
+// 		return 1;
+// 	}
+// 	size_t pos = ftell(hist);
+// 	if (pos < 0) {
+// 		fprintf(stderr, "fTell error\n");
+// 		fclose(hist);
+// 		return 1;
+// 	}
 
-	int counted = 0;
-	while (pos > 0 && counted < lines) {
-		pos--;
-		fseek(hist, pos, SEEK_SET);
-		int c = fgetc(hist);
+// 	int counted = 0;
+// 	while (pos > 0 && counted < lines) {
+// 		pos--;
+// 		fseek(hist, pos, SEEK_SET);
+// 		int c = fgetc(hist);
 
-		if (c == '\n') {
-			counted++;
-		}
-	}
+// 		if (c == '\n') {
+// 			counted++;
+// 		}
+// 	}
 
-	if (ftruncate(fileno(hist), pos + 1) != 0) { // Keep the last newline
-		fprintf(stderr, "Truncate error\n");
-		fclose(hist);
-		return 1;
-	}
-	fclose(hist);
-	return 0;
-}
+// 	if (ftruncate(fileno(hist), pos + 1) != 0) { // Keep the last newline
+// 		fprintf(stderr, "Truncate error\n");
+// 		fclose(hist);
+// 		return 1;
+// 	}
+// 	fclose(hist);
+// 	return 0;
+// }
 
 int main(int argc, char** argv) {
 	int count = 2; // One line for this command, another is to be deleted
@@ -165,9 +166,14 @@ int main(int argc, char** argv) {
 
 	if (strstr(parent, "zsh")) {
 		return remove_zsh_lines("zsh -i -c 'echo $HISTFILE'", count);
-	} else if (strstr(parent, "bash")) {
-		return remove_bash_lines("bash -i -c 'echo $HISTFILE'", count);
-	}
+	} 
+	// After experimentation, I found bash writes all the executed command (including oops)
+	// into a buffer in memory and after quitting (bash) it writes them to the bash_history
+	// file. So, deleting the last n lines this way is pointless. Need a method to delete
+	// lines after bash exits. So, I'm commenting this out too.
+	// else if (strstr(parent, "bash")) {
+	// 	return remove_bash_lines("bash -i -c 'echo $HISTFILE'", count);
+	// }
 	// ...Add more shells
 	else {
 		fprintf(stderr, "Shell not recognised %s\n", parent);

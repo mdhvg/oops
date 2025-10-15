@@ -1,4 +1,4 @@
-# Oops
+# oOPS
 
 Accidentally typed something confidential into the terminal?
 
@@ -62,6 +62,5 @@ make uninstall PREFIX="/path/to/install/dir"
 
 ### Currently supported shells
 - Zsh
-- Bash
 
 > Feel free to make a PR for your preferred terminal :)
