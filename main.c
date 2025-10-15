@@ -45,10 +45,10 @@ int remove_zsh_lines(const char* histfile_command, int lines) {
 
 	// Every command in zsh_history file follows this pattern \n: 1719311251:0;ls
 	// So, sequence becomes [\n] -> [:] -> [ ] -> [NUM] (Can put multiple numbers here too)
-	// state value = 	  0  ->  1  ->  2  ->   3
+	// state value = 		  0  ->  1  ->  2  ->   3
 	// This sequence is parsed in reverse since we're reading the file from the end
 	int initial = 3; // Storing the base case vlaue
-	int state = 3; // For checking the state in state machine
+	int state = 3;   // For checking the state in state machine
 
 	int counted = 0;
 	while (pos > 0 && counted < lines) {
@@ -61,22 +61,24 @@ int remove_zsh_lines(const char* histfile_command, int lines) {
 			// otherwise reset to base state
 			case ' ':
 				state = state == 2 ? 1 : initial;
-			break;
+				break;
 			case ':':
 				state = state == 1 ? 0 : initial;
-			break;
+				break;
 			case '\n':
-				state = state == 0 ? 2 : initial;
 				// Sequence is complete, means 1 line is read
-				counted += 1;
-			break;
+				counted = state == 0 ? (counted + 1) : counted;
+				// Reset state
+				state = initial;
+				break;
 			default:
-			if (isdigit(c)) {
-				// If we see any number, we change the state
-				state -= 1;
-			}
-			// If the sequence is broken return to base state
-			state = initial;
+				if (isdigit(c)) {
+					// If we see any number, we change the state
+					state = 2;
+				} else {
+					// If the sequence is broken return to base state
+					state = initial;
+				}
 		}
 	}
 
